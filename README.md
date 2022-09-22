@@ -1,8 +1,8 @@
-![Docker images](https://github.com/invoiceninja/dockerfiles/workflows/Docker%20images/badge.svg)
+![Docker images](https://github.com/Cretection/invoiceninja-dockerfiles/workflows/Docker%20images/badge.svg)
 [![Docker image, latest](https://img.shields.io/docker/image-size/invoiceninja/invoiceninja/latest?label=latest)](https://hub.docker.com/r/invoiceninja/invoiceninja)
 [![Docker image, alpine](https://img.shields.io/docker/image-size/invoiceninja/invoiceninja/alpine?label=alpine)](https://hub.docker.com/r/invoiceninja/invoiceninja)
 [![Artifact HUB](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/invoiceninja)](https://artifacthub.io/packages/search?repo=invoiceninja)
-[![Pusblish Image](https://github.com/invoiceninja/dockerfiles/actions/workflows/publish-image.yaml/badge.svg)](https://github.com/invoiceninja/dockerfiles/actions/workflows/publish-image.yaml) [![Cache v5 Image](https://github.com/invoiceninja/dockerfiles/actions/workflows/build-image-v5.yaml/badge.svg)](https://github.com/invoiceninja/dockerfiles/actions/workflows/build-image-v5.yaml)
+[![Pusblish Image](https://github.com/Cretection/invoiceninja-dockerfiles/actions/workflows/publish-image.yaml/badge.svg)](https://github.com/Cretection/invoiceninja-dockerfiles/actions/workflows/publish-image.yaml) [![Cache v5 Image](https://github.com/Cretection/invoiceninja-dockerfiles/actions/workflows/build-image-v5.yaml/badge.svg)](https://github.com/Cretection/invoiceninja-dockerfiles/actions/workflows/build-image-v5.yaml)
 
 
 
@@ -17,23 +17,82 @@
 
 ## Get some Kubernetes + Helm with that!
 
-Introducing our very own [Helm Chart](https://github.com/invoiceninja/dockerfiles/tree/master/charts/invoiceninja) that helps you launch a simple standalone app to a production-ready, highly available Invoice Ninja setup. All you need to do is initialise Kubernetes (available with Docker Desktop), install [Helm](https://helm.sh/docs/intro/install/), and spin up Invoice Ninja using the steps provided [here](https://github.com/invoiceninja/dockerfiles/tree/master/charts/invoiceninja#installing-the-chart).
+Introducing our very own [Helm Chart](https://github.com/Cretection/invoiceninja-dockerfiles/tree/master/charts/invoiceninja) that helps you launch a simple standalone app to a production-ready, highly available Invoice Ninja setup. All you need to do is initialise Kubernetes (available with Docker Desktop), install [Helm](https://helm.sh/docs/intro/install/), and spin up Invoice Ninja using the steps provided [here](https://github.com/Cretection/invoiceninja-dockerfiles/tree/master/charts/invoiceninja#installing-the-chart).
 
 Other resources:
 
 [Helm Chart](https://github.com/Saddamus/invoiceninja-helm) by @Saddamus  
-[K8s Manifest](https://github.com/invoiceninja/dockerfiles/issues/94) by @spacepluk
+[K8s Manifest](https://github.com/Cretection/invoiceninja-dockerfiles/issues/94) by @spacepluk
 
 ## Alternatively get started with Docker Compose
 
 The dockerfile has been revamped to make it easier to get started, by default the base image selected is 5 which will pull in the latest v5 stable image.
 
 ```bash
-git clone https://github.com/invoiceninja/dockerfiles.git
-cd dockerfiles
+git clone https://github.com/Cretection/invoiceninja-dockerfiles.git
+cd invoiceninja-dockerfiles
+git checkout override
 ```
 
-Instead of defining our environment variables inside our docker-compose.yml file we now define this in the `env` file, open this file up and insert your `APP_URL`, `APP_KEY` and update the rest of the variables as required.
+```
+version: '3.7'
+services:
+  server:
+    volumes:
+      # Vhost configuration
+      #- ./config/caddy/Caddyfile:/etc/caddy/Caddyfiledocker-com
+    # Run webserver nginx on port 80
+    # Feel free to modify depending what port is already occupied
+    ports:
+      - "80:80"
+      #- "443:443"
+    extra_hosts:
+      - "in5.localhost:192.168.0.124 " #host and ip
+
+  app:
+    extra_hosts:
+      - "in5.localhost:192.168.0.124 " #host and ip
+
+  db:
+#    When running on ARM64 use MariaDB instead of MySQL
+#    image: mariadb:10.4
+#    For auto DB backups comment out image and use the build block below
+#    build:
+#      context: ./config/mysql
+    ports:
+      - "3305:3306"
+#    volumes:
+      # remove comments for next 4 lines if you want auto sql backups
+      #- ./docker/mysql/bak:/backups:rw
+      #- ./config/mysql/backup-script:/etc/cron.daily/daily:ro
+      #- ./config/mysql/backup-script:/etc/cron.weekly/weekly:ro
+      #- ./config/mysql/backup-script:/etc/cron.monthly/monthly:ro
+    extra_hosts:
+      - "in5.localhost:192.168.0.124 " #host and ip
+
+  # THIS IS ONLY A VALID CONFIGURATION FOR IN 4. DO NOT USE FOR IN 5.
+  # cron:
+  #   image: invoiceninja/invoiceninja:alpine-4
+  #   volumes:
+      # - ./docker/app/public:/var/www/app/public:rw,delegated
+      # - ./docker/app/storage:/var/www/app/storage:rw,delegated
+      # - ./docker/app/public/logo:/var/www/app/public/logo:rw,delegated
+  #   entrypoint: |
+  #     /bin/sh -c 'sh -s <<EOF
+  #     trap "break;exit" SIGHUP SIGINT SIGTERM
+  #     sleep 300s
+  #     while /bin/true; do
+  #       ./artisan ninja:send-invoices
+  #       ./artisan ninja:send-reminders
+  #       sleep 1d
+  #     done
+  #     EOF'
+  #   networks:
+  #     - invoiceninja
+  #
+```
+
+Instead of defining our environment variables inside our docker-compose.yml or docker-compose.override.yml file we now define this in the `env` file, open this file up and insert your `APP_URL`, `APP_KEY` and update the rest of the variables as required.
 
 ```
 APP_URL=http://in.localhost:8003/
