@@ -12,3 +12,6 @@ charts/**/charts/
 
 # Compose filesystem
 /docker
+
+# Docker Override File
+docker-compose.override.yml
