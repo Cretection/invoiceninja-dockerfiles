@@ -17,7 +17,7 @@ jobs:
       id: sync-master
       uses: mathieucarbou/Fork-Sync-With-Upstream-action@fork-sync
       with:
-        domain: 'github.com-cretection'
+        domain: 'github.com'
         upstream_repository: invoiceninja/dockerfiles
         upstream_branch: master
         target_branch: master
